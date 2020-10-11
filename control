@@ -1,0 +1,7 @@
+Package: helper
+Version: 0.06.1.2020
+Section: science
+Architecture: all
+Depends: bash, dialog
+Maintainer: Linuxoid85 <michail383krasnov@mail.ru>
+Description: Helper -- offline console helper for noobs;)
