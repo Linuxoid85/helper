@@ -1,0 +1,27 @@
+DIALOG=${DIALOG=dialog}
+VERSION="0.06.2020"
+BUILDS=/home/administrator/Builds/Helper
+BUILDS_HOME=/home/administrator/Builds
+
+clear
+cd $BUILDS
+$DIALOG --backtitle "Helper $VERSION -- сборка пакета" --title " Контрольные суммы" --yesno "Подсчёт контрольных сумм" 6 40
+md5deep -r usr > DEBIAN/md5sums
+$DIALOG --backtitle "Helper $VERSION -- сборка пакета" --title " Работа с каталогами " --yesno "Вход в $BUILDS_HOME" 5 40
+cd $BUILDS_HOME
+$DIALOG --backtitle "Helper $VERSION -- сборка пакета" --title " Сборка в DEB " --yesno "Выполняется сборка файлов в пакет..." 6 40
+clear
+fakeroot dpkg-deb --build Helper
+echo "Проверка..."
+lintian Helper.deb
+echo "Нажмите [Enter]" && read
+echo "Переход в псевдографический режим..."
+$DIALOG --backtitle "Helper $VERSION -- сборка пакета" --title " Установка " --yesno "Идёт установка пакета..." 5 40
+dpkg -i Helper.deb
+$DIALOG --backtitle "Helper $VERSION -- сборка пакета" --title " Установка " --yesno "Установка завершена! \nНажмите [Enter] для продолжения..." 7 40
+clear
+echo "Helper $VERSION -- программа сборки.
+(C) Linuxoid85 для сообщества ''Советы по Linux/GNU Linux, *nix'' (www.vk.com/linuxsovet), 2020
+Это открытый проект. С лицензионным соглашением вы можете ознакомиться
+в файле Helper/DEBIAN/copyright"
+exit
