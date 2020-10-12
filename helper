@@ -34,29 +34,11 @@ HFILE=/usr/share/helper/fl/hfile.sh		 #Быстрая справка
 ERR=~/.helper_ERR_log.log	         	#Файл для работы обработчика ошибок (это не лог)
 ABOUT=/usr/share/helper/fl/about.sh		 #О программе
 SETTINGS=/usr/share/helper/fl/settings.sh	 #Настройки
-#Пакетные менеджеры:
-APT=/usr/share/helper/pm/apt.sh
-DPKG=/usr/share/helper/pm/dpkg.sh
-GDEBI=/usr/share/helper/pm/gdebi.sh
-EOPKG=/usr/share/helper/pm/eopkg.sh
-URPMX=/usr/share/helper/pm/urpm.sh
-PACMAN=/usr/share/helper/pm/pacman.sh
-YUM=/usr/share/helper/pm/yum.sh
-#BASH:
-LS=/usr/share/helper/sh/ls.sh
-CD=/usr/share/helper/sh/cd.sh
-MKDIR=/usr/share/helper/sh/mkdir.sh
-MV=/usr/share/helper/sh/mv.sh
-BASH=/usr/share/helper/sh/bash.sh
-#Sys:
-DISTR=/usr/share/helper/sys/distro.sh
-DISTR_FOR_NOOBS=/usr/share/helper/sys/distro_for_noobs.sh
-USRS=/usr/share/helper/sys/usrs.sh
 #Настройки:
 config_file=~/.helper.config_file		#Файл с настройками
 welcome=show_welcome_screen	#Стартовый экран			
 #Чёрный список дистрибутивов:
-blklst=Ubuntu
+blklst=Debian
 blklst_distro=`inxi -S`
 blklst_distro_file=~/.distr
 #Что-то для меню:
@@ -65,8 +47,6 @@ bash=bash
 system=system
 laifhack=laifhack
 helper=helper
-#Другое:
-    #нет другого...
 
 #Функции:
 exit_pr() {
@@ -87,7 +67,17 @@ exit_pr() {
 }
 
 end2() {
+	master_pass=lin
+	master_file=~/.helper_master_file
 	$DIALOG --backtitle "Helper $VERSION -- подтверждение действия" --title " Подтверждение действия" --yesno "Для продолжения нажмите [Enter]" 5 40
+	$DIALOG --backtitle "Helper $VERSION -- аварийный режим. Дата: $DATE" --title "Input MASTER-Key" --inputbox "Ошибка авторизации! Для продолжения, введите значения MASTER-пароля:" 16 51 2> $master_file
+	if grep 'lin' $master_file; then
+		clear && echo "Нажмите [Enter] для продолжения..."
+		read
+	else
+		clear && echo "Неверно набран MASTER_Key. Сессия ''Slave'' будет закрыта"
+		exit 0
+	fi
 }
 
 #Обработчик ошибок. Получает данные на основе файла $ERR (см. блок переменных)
@@ -163,6 +153,11 @@ pkg_menu() {
 }
 
 sh_menu() {
+	LS=/usr/share/helper/sh/ls.sh
+	CD=/usr/share/helper/sh/cd.sh
+	MKDIR=/usr/share/helper/sh/mkdir.sh
+	MV=/usr/share/helper/sh/mv.sh
+	BASH=/usr/share/helper/sh/bash.sh
 	rm $tempfile && touch $tempfile
 	run=`cat $tempfile`
 	$DIALOG --backtitle "Helper $VERSION -- справка по командам BASH. Дата: $DATE" --title " Выбор нужного подпункта " --hfile $HFILE --scrollbar --keep-window \
@@ -177,6 +172,9 @@ sh_menu() {
 }
 
 sys_menu() {
+	DISTR=/usr/share/helper/sys/distro.sh
+	DISTR_FOR_NOOBS=/usr/share/helper/sys/distro_for_noobs.sh
+	USRS=/usr/share/helper/sys/usrs.sh
 	rm $tempfile && touch $tempfile
 	run=`cat $tempfile`
 	$DIALOG --backtitle "Helper $VERSION -- справка по системам Linux. Дата: $DATE" --title " Выбор нужного подпункта " --hfile $HFILE --scrollbar --keep-window \
@@ -260,7 +258,14 @@ while true; do
 	start_pr
 
 # ПАКЕТНЫЕ МЕНЕДЖЕРЫ
-	if grep $pkg $tempfile; then 
+	if grep $pkg $tempfile; then
+		APT=/usr/share/helper/pm/apt.sh
+		DPKG=/usr/share/helper/pm/dpkg.sh
+		GDEBI=/usr/share/helper/pm/gdebi.sh
+		EOPKG=/usr/share/helper/pm/eopkg.sh
+		URPMX=/usr/share/helper/pm/urpm.sh
+		PACMAN=/usr/share/helper/pm/pacman.sh
+		YUM=/usr/share/helper/pm/yum.sh
 		pkg_menu
 		run=`cat $tempfile`	#Файл с выбранным пунктом меню
    		case $run in
