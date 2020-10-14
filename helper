@@ -87,11 +87,9 @@ error() {
 		$DIALOG --backtitle "Helper $VERSION -- ошибка! Дата: $DATE" --title " ОШИБКА ВВОДА! " --yesno "Неправильный ввод - должен быть как в списке действий! За подробной информацией обратитесь к разработчику (www.vk.com/linuxoid85)" 9 40
 	fi
 
-	#Если ещё ведётся разработка (актуально для предрелизной версии
+	#Если ещё ведётся разработка (актуально для предрелизной версии, либо же для недоделок в скрипте)
 	if grep 'dev' $ERR; then
-		$DIALOG --backtitle "Helper $VERSION -- ошибка! Дата: $DATE" --title " ИДЁТ РАЗРАБОТКА " --yesno "Это действие пока недоступно. Ждите обновлений.
-Официальные стабильные релизы выходят каждый месяц. Официальные
-обновления предрелизной сборки выходят каждую неделю." 10 45
+		$DIALOG --backtitle "Helper $VERSION -- ошибка! Дата: $DATE" --title " ИДЁТ РАЗРАБОТКА " --yesno "Это действие пока недоступно. Ждите обновлений. Официальные стабильные релизы выходят каждый месяц. Официальные обновления предрелизной сборки выходят десядого числа каждого месяца." 10 45
 	fi
 
 	#Если файл не найден (целостность установочного пакета всегда проверяется, однако на всякий случай очень хорошо иметь данную функцию для отладки скрипта)
@@ -245,16 +243,19 @@ if grep 'deb' $update_file; then
 	fi
 fi
 
+# RHEL-based
 if grep 'rpm' $update_file; then
 	echo "dev" > $ERR
 	error
 fi
 
+#Arch-based
 if grep 'tar' $update_file; then
 	echo "dev" > $ERR
 	error
 fi
 
+#Other
 if grep 'oth' $update_file; then
 	clear
 	echo -e "/e[1mИдёт скачивание и установка Helper\e[0m"
@@ -337,7 +338,9 @@ if grep $welcome $config_file; then
 fi
 
 if grep 'update' $config_file; then
-	update
+	if grep '10' $DATE; then
+		update
+	fi
 fi
 
 echo "$blklst_distro" > $blklst_distro_file
