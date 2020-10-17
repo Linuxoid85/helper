@@ -15,7 +15,7 @@
 
 #(C) @linuxoid85 специально для "Советы по Linux/GNU Linux", 2020
 
-#/bin/bash
+#/bin/zsh
 
 #Slave (приведены основные переменные и функции)
 #ПЕРЕМЕННЫЕ:
@@ -145,6 +145,7 @@ pkg_menu() {
 	"pacman" "Инструкция по работе с PACMAN" \
 	"yum" "Инструкция по работе с YUM" \
 	"urpm" "Инструкция по работе с URPMx" \
+	"pkg" "Инструкция по работе с PKG" \
 	"ext" "Выход в главное меню" \
 	"exit" "Выход из программы" 2> $tempfile
 }
@@ -205,6 +206,7 @@ update() {
 if test -f $update_file; then
 	echo "Файл $update_file присутствует."
 else
+	touch $update_file
 	$DIALOG --backtitle "Helper $VERSION -- обновление программы. Дата: $DATE" --title " Выбор дистрибутива " --hfile $HFILE --scrollbar --keep-window \
 	--menu "Клавишами со стрелками выберите нужный пункт и \nнажмите [Enter]" 20 50 15 \
 		"deb" "Debian/Devuan GNU/Linux" \
@@ -212,7 +214,6 @@ else
 		"tar" "Arch/Manjaro Linux" \
 		"oth" "Другой дистрибутив" 2> $update_file
 fi
-run_update=`cat $update_file`
 
 if grep 'deb' $update_file; then
 	clear
@@ -223,7 +224,7 @@ if grep 'deb' $update_file; then
 		echo -e "\e[1mУдалено!\e[0m"
 	fi
 	echo -e "Скачивание пакета..."
-	wget https://github.com/Linuxoid85/helper/releases/download/0.06.1.2020/Helper.deb
+	wget https://github.com/Linuxoid85/helper/releases/download/0.06.2.2020/Helper.deb
 	clear
 	echo -e "\e[1mУстановка пакета\e[0m"
 	if test -f Helper.deb; then
@@ -265,7 +266,7 @@ if grep 'oth' $update_file; then
 		echo -e "\e[1mУдалено!\e[0m"
 	fi
 	echo -e "Скачивание пакета..."
-	wget https://github.com/Linuxoid85/helper/releases/download/0.06.1.2020/Helper.tar
+	wget https://github.com/Linuxoid85/helper/releases/download/0.06.2.2020/Helper.tar
 	clear
 	echo -e "\e[1mУстановка пакета\e[0m"
 	if test -f Helper.tar; then
@@ -338,7 +339,8 @@ if grep $welcome $config_file; then
 fi
 
 if grep 'update' $config_file; then
-	if grep '10' $DATE; then
+	echo "$DATE" > ~/.date_up.hlp
+	if grep '10' ~/.date_up.hlp; then
 		update
 	fi
 fi
@@ -360,6 +362,7 @@ while true; do
 		URPMX=/usr/share/helper/pm/urpm.sh
 		PACMAN=/usr/share/helper/pm/pacman.sh
 		YUM=/usr/share/helper/pm/yum.sh
+		PKG=/usr/share/helper/pm/pkg.sh
 		pkg_menu
 		run=`cat $tempfile`	#Файл с выбранным пунктом меню
    		case $run in
@@ -431,6 +434,19 @@ while true; do
 		pacman)
 			if test -f "$PACMAN"; then
 				sh $PACMAN
+				rm $tempfile && touch $tempfile
+				pkg_menu
+			else
+				echo "file" > $ERR
+				error
+				rm $tempfile && touch $tempfile
+				pkg_menu
+			fi
+		;;
+
+		pkg)
+			if test -f "$PKG"; then
+				sh $PKG
 				rm $tempfile && touch $tempfile
 				pkg_menu
 			else
