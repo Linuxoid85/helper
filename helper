@@ -55,9 +55,14 @@ exit_pr() {
 	fi
 
 	clear
-	$DIALOG --backtitle "Helper $VERSION -- выход из программы. Дата: $DATE" --title " Выход " --yesno " Больше информации вы можете найти по адресу www.vk.com/linuxsovet
+	if [ -z $DISPLAY ]
+	then
+		$DIALOG --backtitle "Helper $VERSION -- выход из программы. Дата: $DATE" --title " Выход " --yesno " Больше информации вы можете найти по адресу www.vk.com/linuxsovet
 Если у Вас есть вопрос или замечание, то напишите сюда: www.vk.com/linuxoid85.
 \nСделано Linuxoid85 специально для сообщества ''Советы по Linux/GNU Linux/ *nix''" 10 50
+	else
+		kdialog --title "Прощание" --msgbox " Больше информации вы можете найти по адресу vk.com/linuxsovet . Если у вас есть вопрос или замечание, то напишите сюда: www.vk.com/linuxoid85. \n Сделано Linuoid85 для сообщества ''Советы по Linux/GNU Linux, *nix''"
+	fi
 	clear
 	echo "Helper $VERSION -- оффлайн справочник новичка.
 Больше информации вы можете найти по адресу www.vk.com/linuxsovet
@@ -66,88 +71,120 @@ exit_pr() {
 	exit 0
 }
 
-end2() {
-	master_pass=lin
-	master_file=~/.helper_master_file
-	#$DIALOG --backtitle "Helper $VERSION -- подтверждение действия" --title " Подтверждение действия" --yesno "Для продолжения нажмите [Enter]" 5 40
-	$DIALOG --backtitle "Helper $VERSION -- аварийный режим. Дата: $DATE" --title " Input MASTER-Key " --inputbox "Ошибка авторизации! Для продолжения, введите значения MASTER-пароля:" 9 50 2> $master_file
-	if grep 'lin' $master_file; then
-		clear && echo "Авторизировано!"
-		sleep 5
-	else
-		clear && echo "Неверно набран MASTER_Key. Сессия ''Slave'' будет закрыта"
-		exit 0
-	fi
-}
-
 #Обработчик ошибок. Получает данные на основе файла $ERR (см. блок переменных)
 error() {
 	#Если неправильно введена комманда
 	if grep 'print' $ERR; then
-		$DIALOG --backtitle "Helper $VERSION -- ошибка! Дата: $DATE" --title " ОШИБКА ВВОДА! " --yesno "Неправильный ввод - должен быть как в списке действий! За подробной информацией обратитесь к разработчику (www.vk.com/linuxoid85)" 9 40
+		kdialog --title " ОШИБКА ВВОДА! " --error "Неправильный ввод - должен быть как в списке действий! За подробной информацией обратитесь к разработчику (www.vk.com/linuxoid85)"
 	fi
 
 	#Если ещё ведётся разработка (актуально для предрелизной версии, либо же для недоделок в скрипте)
 	if grep 'dev' $ERR; then
-		$DIALOG --backtitle "Helper $VERSION -- ошибка! Дата: $DATE" --title " ИДЁТ РАЗРАБОТКА " --yesno "Это действие пока недоступно. Ждите обновлений. Официальные стабильные релизы выходят каждый месяц. Официальные обновления предрелизной сборки выходят десядого числа каждого месяца." 10 45
+		if [ -z $DISPLAY ]
+		then
+			$DIALOG --backtitle "Helper $VERSION -- ошибка: ведётся разработка" --ttitle " ИДЁТ РАЗРАБОТКА " --yesno "Это действие пока недоступно. Ждите обновлений. Официальные стабильные релизы выходят каждый месяц. Официальные обновления предрелизной сборки выходят десятого числа каждого месяца." 8 40
+		else
+			kdialog --title " ИДЁТ РАЗРАБОТКА " --sorry "Это действие пока недоступно. Ждите обновлений. Официальные стабильные релизы выходят каждый месяц. Официальные обновления предрелизной сборки выходят десятого числа каждого месяца."
+		fi
 	fi
 
 	#Если файл не найден (целостность установочного пакета всегда проверяется, однако на всякий случай очень хорошо иметь данную функцию для отладки скрипта)
 	if grep 'file' $ERR; then
-		$DIALOG --backtitle "Helper $VERSION -- критическая ошибка! Дата: $DATE" --title " ФАЙЛ НЕ НАЙДЕН! " --yesno " Необходимый для работы файл не найден! Проверьте правильность установки. Если не поможет - переустановите. Быть может, архив повреждён." 9 40
+		kdialog --title " ФАЙЛ НЕ НАЙДЕН! " --error " Необходимый для работы файл не найден! Проверьте правильность установки. Если не поможет - переустановите. Быть может, архив повреждён."
 	fi
 
 	#Если дистрибутив в чёрном списке (надо приучать начинающих юзеров к порядку)
 	if grep 'blacklist' $ERR; then
-		ret
-		$DIALOG --backtitle "Helper $VERSION -- критическая ошибка! Работа в аварийном режиме. Дата: $DATE" --title " ДИСТРИБУТИВ В ЧЁРНОМ СПИСКЕ! " --yesno "Дистрибутив, который вы используете, находистся в чёрном списке Helper. Это значит, что вы не сможете запустить его на вашем дистрибутиве. За подробной информацией обратитесь к разработчику (файл $HELP)" 10 50
-		retval=$?
-		case $retval in
-  			0)
-    				$DIALOG --backtitle "Helper $VERSION -- работа в аварийном режиме. Дата: $DATE" --title " КРИТИЧЕСКАЯ ОШИБКА " --yesno "Дистрибутив, которым вы пользуетесь не проверен на безопастность. Работа Helper на нём небезопасна и Helper будет закрыт. За подробной информацией обратитесь к разработчику (см. файл $HELP)" 10 50
-				exit_pr
-    			;;
-  
-			1)
-    				$DIALOG --backtitle "Helper $VERSION -- работа в аварийном режиме. Дата: $DATE" --title " КРИТИЧЕСКАЯ ОШИБКА " --yesno "ОТКАЗ ОТ ВВОДА. За подробной информацией обратитесь к разработчику (см. файл $HELP)" 7 50
-				exit_pr
-			;;
-  
-			255)
-    				$DIALOG --backtitle "Helper $VERSION -- работа в аварийном режиме. Дата: $DATE" --title " КРИТИЧЕСКАЯ ОШИБКА " --yesno "ОТКАЗ ОТ ВВОДА. За подробной информацией обратитесь к разработчику (см. файл $HELP)" 7 50
-    				end2
-    			;;
-		esac
+		kdialog --title " ДИСТРИБУТИВ В ЧЁРНОМ СПИСКЕ! " --error "Дистрибутив, который вы используете, находистся в чёрном списке Helper. Это значит, что вы не сможете запустить его на вашем дистрибутиве. За подробной информацией обратитесь к разработчику (файл $HELP)"
+		exit 0
 	fi
 }
 
 start_pr() {
 	rm $tempfile && touch $tempfile
-	run=`cat $tempfile`
 	clear
-	$DIALOG --backtitle "Helper $VERSION -- стартовое меню. Дата: $DATE" --title " Выбор нужного пункта " --hfile $HFILE --scrollbar --keep-window \
-	--menu "Клавишами со стрелками выберите нужный пункт и \nнажмите [Enter]" 13 58 15 \
-	"pkg" "Пакетные менеджеры" \
-	"bash" "BASH и всё с ним связанное" \
-	"system" "Операционные системы" \
-	"helper" "О Helper" \
-	"exit" "Выход" 2> $tempfile
+	if [ -z $DISPLAY ]
+	then
+		run=`cat $tempfile`
+		$DIALOG --backtitle "Helper $VERSION -- стартовое меню. Дата: $DATE" --title " Выбор нужного пункта " --hfile $HFILE --scrollbar --keep-window \
+		--menu "Клавишами со стрелками выберите нужный пункт и нажмите [Enter]" 13 58 15 \
+			"pkg" "Пакетные менеджеры" \
+			"bsh" "BASH, Shell и всё с ними связанное" \
+			"system" "Работа с операционными систеемами" \
+			"hlp" "О программе" \
+			"exit" "Выход" 2> $tempfile
+	else
+		run=$(kdialog --title "Стартовое меню" --menu "Выберите нужный пункт и нажмите [Ok]" \
+			pkg "Пакетные менеджеры" \
+			bsh "BASH, Shell и всё с ними связанное" \
+			system "Работа с операционными системами" \
+			hlp "О программе" \
+			exit "Выход из программы" 2> $tempfile);
+
+		case $run in
+			pkg)
+				pkg_menu
+			;;
+
+			bsh)
+				sh_menu
+			;;
+
+			system)
+				sys_menu
+			;;
+
+			hlp)
+				hlp_menu
+			;;
+
+			exit)
+				exit_pr
+			;;
+
+			*)
+				echo "print" > $ERR
+				error
+			;;
+
+		esac
+	fi
 }
 
 pkg_menu() {
+	APT=/usr/share/helper/pm/apt.sh
+	DPKG=/usr/share/helper/pm/dpkg.sh
+	GDEBI=/usr/share/helper/pm/gdebi.sh
+	URPMX=/usr/share/helper/pm/urpm.sh
+	PACMAN=/usr/share/helper/pm/pacman.sh
+	YUM=/usr/share/helper/pm/yum.sh
+	PKG=/usr/share/helper/pm/pkg.sh
 	rm $tempfile && touch $tempfile
-	run=`cat $tempfile`
-	$DIALOG --backtitle "Helper $VERSION -- справка по пакетным менеджерам. Дата: $DATE" --title " Выбор нужного подпункта " --hfile $HFILE --scrollbar --keep-window \
-	--menu "Клавишами со стрелками выберите нужный пункт и \nнажмите [Enter]" 16 58 15 \
-	"apt" "Инструкция по работе с APT" \
-	"dpkg" "Инструкция по работе с DPKG" \
-	"gdebi" "Инструкция по работе с GDEBI" \
-	"pacman" "Инструкция по работе с PACMAN" \
-	"yum" "Инструкция по работе с YUM" \
-	"urpm" "Инструкция по работе с URPMx" \
-	"pkg" "Инструкция по работе с PKG" \
-	"ext" "Выход в главное меню" \
-	"exit" "Выход из программы" 2> $tempfile
+	if [ -z $DISPLAY ]
+	then
+		run=`cat $tempfile`
+		$DIALOG --backtitle "Helper $VERSION -- справка по пакетным менеджерам. Дата: $DATE" --title " Выбор нужного подпункта " --hfile $HFILE --scrollbar --keep-window \
+		--menu "Клавишами со стрелками выберите нужный пункт и \nнажмите [Enter]" 16 58 15 \
+		"apt" "Инструкция по работе с APT" \
+		"dpkg" "Инструкция по работе с DPKG" \
+		"gdebi" "Инструкция по работе с GDEBI" \
+		"pacman" "Инструкция по работе с PACMAN" \
+		"yum" "Инструкция по работе с YUM" \
+		"urpm" "Инструкция по работе с URPMx" \
+		"pkg" "Инструкция по работе с PKG" \
+		"ext" "Выход в главное меню" \
+		"exit" "Выход из программы" 2> $tempfile
+	else
+		run=$(kdialog --title "Выбор спаравки по пакетным менеджерам" --menu "Выберите нужный пункт и нажмите [Ok]:" \
+			apt "Инструкция по работе с APT" \
+			dpkg "Инструкция по работе с DPKG" \
+			gdebi "Инструкция по работе с GDEBI" \
+			pacman "Инструкция по работе с Pacman" \
+			yum "Инструкция по работе с YUM" \
+			pkg "Инструкция по работе с PKG" \
+			ext "Выход в главное меню" \
+			exit "Выход из программы")
+	fi
 }
 
 sh_menu() {
@@ -345,30 +382,22 @@ if grep 'update' $config_file; then
 	fi
 fi
 
-echo "$blklst_distro" > $blklst_distro_file
-if grep $blklst $blklst_distro_file; then
-	echo "blacklist" > $ERR
-	error
-fi
-
 while true; do
 	start_pr
 
 # ПАКЕТНЫЕ МЕНЕДЖЕРЫ
 	if grep $pkg $tempfile; then
-		APT=/usr/share/helper/pm/apt.sh
-		DPKG=/usr/share/helper/pm/dpkg.sh
-		GDEBI=/usr/share/helper/pm/gdebi.sh
-		URPMX=/usr/share/helper/pm/urpm.sh
-		PACMAN=/usr/share/helper/pm/pacman.sh
-		YUM=/usr/share/helper/pm/yum.sh
-		PKG=/usr/share/helper/pm/pkg.sh
 		pkg_menu
 		run=`cat $tempfile`	#Файл с выбранным пунктом меню
    		case $run in
         	apt)
 			if test -f "$APT"; then
-				sh $APT
+				if [ -z $DISPLAY ]
+				then
+					sh $APT
+				else
+					kdialog --miniicon accessibility-directory --name "Helper" --title "Справка по APT" --textbox /usr/share/helper/pm/apt.hlp 512 256
+				fi
 				rm $tempfile && touch $tempfile
 				pkg_menu
 			else
@@ -381,7 +410,12 @@ while true; do
 
         	dpkg)
 			if test -f "$DPKG"; then
-				sh $DPKG
+				if [ -z $DISPLAY ]
+				then
+					sh $DPKG
+				else
+					kdialog --miniicon accessibility-directory --title "Справка по DPKG" --textbox /usr/share/helper/pm/dpkg.hlp 512 256
+				fi
 				rm $tempfile && touch $tempfile
 				pkg_menu
 			else
@@ -394,7 +428,12 @@ while true; do
 
 	        gdebi)
 			if test -f "$GDEBI"; then
-				sh $GDEBI
+				if [ -z $DISPLAY ]
+				then
+					sh $GDEBI
+				else
+					kdialog --miniicon accessibility-directory --title "Справка по GDebi" --textbox /usr/share/helper/pm/gdebi.hlp 512 256
+				fi
 				rm $tempfile && touch $tempfile
 				pkg_menu
 			else
@@ -420,7 +459,12 @@ while true; do
 
 		yum)
 			if test -f "$YUM"; then
-				sh $YUM
+				if [ -z $DISPLAY ]
+				then
+					sh $YUM
+				else
+					kdialog --miniicon accessibility-directory --title "Справка по YUM" --textbox /usr/share/helper/pm/yum.hlp 512 256
+				fi
 				rm $tempfile && touch $tempfile
 				pkg_menu
 			else
@@ -433,7 +477,12 @@ while true; do
 
 		pacman)
 			if test -f "$PACMAN"; then
-				sh $PACMAN
+				if [ -z $DISPLAY ]
+				then
+					sh $PACMAN
+				else
+					kdialog --miniicon accessibility-directory --title "Справка по Pacman" --textbox /usr/share/helper/pm/pacman.hlp 512 256
+				fi
 				rm $tempfile && touch $tempfile
 				pkg_menu
 			else
@@ -446,7 +495,12 @@ while true; do
 
 		pkg)
 			if test -f "$PKG"; then
-				sh $PKG
+				if [ -z $DISPLAY ]
+				then
+					sh $PKG
+				else
+					kdialog --miniicon accessibility-directory --title "Справка по PKG" --textbox /usr/share/helper/pm/pkg.hlp 512 256
+				fi
 				rm $tempfile && touch $tempfile
 				pkg_menu
 			else
