@@ -15,39 +15,12 @@
 
 #(C) @linuxoid85 специально для "Советы по Linux/GNU Linux", 2020
 
-#/bin/zsh
+#/bin/bash
 
 #Slave (приведены основные переменные и функции)
 #ПЕРЕМЕННЫЕ:
-#Script:
-LICENSE=/usr/share/helper/fl/license.sh		 #Лицензионное соглашение
-VERSION="0.06.2020"				 #Текущая версия
-DIALOG=${DIALOG=dialog}
-tempfile=~/.helper.tmpfile	 		#Файл для работы меню
-update_file=~/.helper.distr.update 		#Файл для работы обновлений
-directory=`pwd`					 #Где я?
-mem=`free -t -m|grep 'Mem'`			 #Память
-HELP=/usr/share/helper/fl/help.sh		 #Справка
-FIRST_START=/usr/share/helper/fl/first-start.sh  #Экран приветствия
-DATE=`date`					 #Дата (краткий формат)(
-HFILE=/usr/share/helper/fl/hfile.sh		 #Быстрая справка
-ERR=~/.helper_ERR_log.log	         	#Файл для работы обработчика ошибок (это не лог)
-ABOUT=/usr/share/helper/fl/about.sh		 #О программе
-SETTINGS=/usr/share/helper/fl/settings.sh	 #Настройки
-#Настройки:
-config_file=~/.helper.config_file		#Файл с настройками
-welcome=show_welcome_screen	#Стартовый экран			
-#Чёрный список дистрибутивов:
-blklst=Ubuntu
-blklst_distro=`inxi -S`
-blklst_distro_file=~/.distr
-#Что-то для меню:
-pkg=pkg
-bash=bash
-system=system
-laifhack=laifhack
-helper=helper
 
+source /usr/share/helper/fl/src.hlp
 #Функции:
 exit_pr() {
 	if test -f "$ERR"; then		#Если файл $ERR существует, то стереть его во избежание ошибок после повторного старта Helper
@@ -55,19 +28,12 @@ exit_pr() {
 	fi
 
 	clear
-	if [ -z $DISPLAY ]
-	then
-		$DIALOG --backtitle "Helper $VERSION -- выход из программы. Дата: $DATE" --title " Выход " --yesno " Больше информации вы можете найти по адресу www.vk.com/linuxsovet
-Если у Вас есть вопрос или замечание, то напишите сюда: www.vk.com/linuxoid85.
-\nСделано Linuxoid85 специально для сообщества ''Советы по Linux/GNU Linux/ *nix''" 10 50
-	else
-		kdialog --title "Прощание" --msgbox " Больше информации вы можете найти по адресу vk.com/linuxsovet . Если у вас есть вопрос или замечание, то напишите сюда: www.vk.com/linuxoid85. \n Сделано Linuoid85 для сообщества ''Советы по Linux/GNU Linux, *nix''"
+	$DIALOG --backtitle "Helper $VERSION -- выход из программы. Дата: $DATE" --title " $exit_pr_title " --yesno " $ext_pr" 0 0
+	if [ $? != 0 ]; then
+		helper
 	fi
 	clear
-	echo "Helper $VERSION -- оффлайн справочник новичка.
-Больше информации вы можете найти по адресу www.vk.com/linuxsovet
-Если у Вас есть вопрос или замечание, то напишите сюда: www.vk.com/linuxoid85.
-@linuxoid85, 2020 год."
+	echo "$ext_cli"
 	exit 0
 }
 
@@ -75,141 +41,63 @@ exit_pr() {
 error() {
 	#Если неправильно введена комманда
 	if grep 'print' $ERR; then
-		kdialog --title " ОШИБКА ВВОДА! " --error "Неправильный ввод - должен быть как в списке действий! За подробной информацией обратитесь к разработчику (www.vk.com/linuxoid85)"
+		$DIALOG --backtitle "Helper $VERSION -- ошибка! Дата: $DATE" --title " $error_print_title " --yesno "$error_print" 9 40 #Мастодонт, который остался до сих пор в Helper)). С самой первой версии
 	fi
 
-	#Если ещё ведётся разработка (актуально для предрелизной версии, либо же для недоделок в скрипте)
+	#Если ещё ведётся разработка (актуально для предрелизной версии
 	if grep 'dev' $ERR; then
-		if [ -z $DISPLAY ]
-		then
-			$DIALOG --backtitle "Helper $VERSION -- ошибка: ведётся разработка" --ttitle " ИДЁТ РАЗРАБОТКА " --yesno "Это действие пока недоступно. Ждите обновлений. Официальные стабильные релизы выходят каждый месяц. Официальные обновления предрелизной сборки выходят десятого числа каждого месяца." 8 40
-		else
-			kdialog --title " ИДЁТ РАЗРАБОТКА " --sorry "Это действие пока недоступно. Ждите обновлений. Официальные стабильные релизы выходят каждый месяц. Официальные обновления предрелизной сборки выходят десятого числа каждого месяца."
-		fi
+		$DIALOG --backtitle "Helper $VERSION -- ошибка! Дата: $DATE" --title " $error_dev_title " --yesno "$error_dev" 10 45
 	fi
 
 	#Если файл не найден (целостность установочного пакета всегда проверяется, однако на всякий случай очень хорошо иметь данную функцию для отладки скрипта)
 	if grep 'file' $ERR; then
-		kdialog --title " ФАЙЛ НЕ НАЙДЕН! " --error " Необходимый для работы файл не найден! Проверьте правильность установки. Если не поможет - переустановите. Быть может, архив повреждён."
-	fi
-
-	#Если дистрибутив в чёрном списке (надо приучать начинающих юзеров к порядку)
-	if grep 'blacklist' $ERR; then
-		kdialog --title " ДИСТРИБУТИВ В ЧЁРНОМ СПИСКЕ! " --error "Дистрибутив, который вы используете, находистся в чёрном списке Helper. Это значит, что вы не сможете запустить его на вашем дистрибутиве. За подробной информацией обратитесь к разработчику (файл $HELP)"
-		exit 0
+		$DIALOG --backtitle "Helper $VERSION -- критическая ошибка! Дата: $DATE" --title " $error_file_title " --yesno " $error_file" 9 40
 	fi
 }
 
 start_pr() {
 	rm $tempfile && touch $tempfile
+	run=`cat $tempfile`
 	clear
-	if [ -z $DISPLAY ]
-	then
-		run=`cat $tempfile`
-		$DIALOG --backtitle "Helper $VERSION -- стартовое меню. Дата: $DATE" --title " Выбор нужного пункта " --hfile $HFILE --scrollbar --keep-window \
-		--menu "Клавишами со стрелками выберите нужный пункт и нажмите [Enter]" 13 58 15 \
-			"pkg" "Пакетные менеджеры" \
-			"bsh" "BASH, Shell и всё с ними связанное" \
-			"system" "Работа с операционными систеемами" \
-			"hlp" "О программе" \
-			"exit" "Выход" 2> $tempfile
-	else
-		run=$(kdialog --title "Стартовое меню" --menu "Выберите нужный пункт и нажмите [Ok]" \
-			pkg "Пакетные менеджеры" \
-			bsh "BASH, Shell и всё с ними связанное" \
-			system "Работа с операционными системами" \
-			hlp "О программе" \
-			exit "Выход из программы" 2> $tempfile);
-
-		case $run in
-			pkg)
-				pkg_menu
-			;;
-
-			bsh)
-				sh_menu
-			;;
-
-			system)
-				sys_menu
-			;;
-
-			hlp)
-				hlp_menu
-			;;
-
-			exit)
-				exit_pr
-			;;
-
-			*)
-				echo "print" > $ERR
-				error
-			;;
-
-		esac
-	fi
+	$DIALOG --backtitle "Helper $VERSION -- стартовое меню. Дата: $DATE" --title " Выбор нужного пункта " --hfile $HFILE --scrollbar --keep-window \
+	--menu "$menu_inf" 13 58 15 \
+	"pkg" "$title_pkg" \
+	"bash" "$title_sh" \
+	"system" "$title_sh" \
+	"helper" "$title_hlp" \
+	"exit" "$exit_to_cli" 2> $tempfile
 }
 
 pkg_menu() {
-	APT=/usr/share/helper/pm/apt.sh
-	DPKG=/usr/share/helper/pm/dpkg.sh
-	GDEBI=/usr/share/helper/pm/gdebi.sh
-	URPMX=/usr/share/helper/pm/urpm.sh
-	PACMAN=/usr/share/helper/pm/pacman.sh
-	YUM=/usr/share/helper/pm/yum.sh
-	PKG=/usr/share/helper/pm/pkg.sh
 	rm $tempfile && touch $tempfile
-	if [ -z $DISPLAY ]
-	then
-		run=`cat $tempfile`
-		$DIALOG --backtitle "Helper $VERSION -- справка по пакетным менеджерам. Дата: $DATE" --title " Выбор нужного подпункта " --hfile $HFILE --scrollbar --keep-window \
-		--menu "Клавишами со стрелками выберите нужный пункт и \nнажмите [Enter]" 16 58 15 \
-		"apt" "Инструкция по работе с APT" \
-		"dpkg" "Инструкция по работе с DPKG" \
-		"gdebi" "Инструкция по работе с GDEBI" \
-		"pacman" "Инструкция по работе с PACMAN" \
-		"yum" "Инструкция по работе с YUM" \
-		"urpm" "Инструкция по работе с URPMx" \
-		"pkg" "Инструкция по работе с PKG" \
-		"ext" "Выход в главное меню" \
-		"exit" "Выход из программы" 2> $tempfile
-	else
-		run=$(kdialog --title "Выбор спаравки по пакетным менеджерам" --menu "Выберите нужный пункт и нажмите [Ok]:" \
-			apt "Инструкция по работе с APT" \
-			dpkg "Инструкция по работе с DPKG" \
-			gdebi "Инструкция по работе с GDEBI" \
-			pacman "Инструкция по работе с Pacman" \
-			yum "Инструкция по работе с YUM" \
-			pkg "Инструкция по работе с PKG" \
-			ext "Выход в главное меню" \
-			exit "Выход из программы")
-	fi
+	run=`cat $tempfile`
+	$DIALOG --backtitle "Helper $VERSION -- $title_pkg Дата: $DATE" --title " Выбор нужного подпункта " --hfile $HFILE --scrollbar --keep-window \
+	--menu "$menu_inf" 16 58 15 \
+	"apt" "$menu_apt" \
+	"dpkg" "$menu_dpkg" \
+	"gdebi" "$menu_gdebi" \
+	"pacman" "$menu_pacman" \
+	"yum" "$menu_yum" \
+	"pkg" "$menu_pkg" \
+	"ext" "$exit_to_start" \
+	"exit" "$exit_to_cli" 2> $tempfile
 }
 
 sh_menu() {
-	LS=/usr/share/helper/sh/ls.sh
-	CD=/usr/share/helper/sh/cd.sh
-	MKDIR=/usr/share/helper/sh/mkdir.sh
-	MV=/usr/share/helper/sh/mv.sh
-	BASH=/usr/share/helper/sh/bash.sh
 	rm $tempfile && touch $tempfile
 	run=`cat $tempfile`
-	$DIALOG --backtitle "Helper $VERSION -- справка по командам BASH. Дата: $DATE" --title " Выбор нужного подпункта " --hfile $HFILE --scrollbar --keep-window \
-	--menu "Клавишами со стрелками выберите нужный пункт и \nнажмите [Enter]" 16 58 15 \
-	"bash" "Краткий список команд BASH" \
-	"ls" "Инструкция по работе с Ls" \
-	"cd" "Инструкция по работе с Cd" \
-	"mkdir" "Инструкция по работе с MkDir" \
-	"mv" "Инструкция по работе с MV" \
-	"ext" "Выход в главное меню" \
-	"exit" "Выход из программы" 2> $tempfile
+	$DIALOG --backtitle "Helper $VERSION -- $title_sh. Дата: $DATE" --title " Выбор нужного подпункта " --hfile $HFILE --scrollbar --keep-window \
+	--menu "$menu_inf" 16 58 15 \
+	"bash" "$menu_shell" \
+	"ls" "$menu_ls" \
+	"cd" "$menu_cd" \
+	"mkdir" "$menu_mkd" \
+	"mv" "$menu_mv" \
+	"ext" "$exit_to_start" \
+	"exit" "$exit_to_cli" 2> $tempfile
 }
 
 sys_menu() {
-	DISTR=/usr/share/helper/sys/distro.sh
-	DISTR_FOR_NOOBS=/usr/share/helper/sys/distro_for_noobs.sh
-	USRS=/usr/share/helper/sys/usrs.sh
 	rm $tempfile && touch $tempfile
 	run=`cat $tempfile`
 	$DIALOG --backtitle "Helper $VERSION -- справка по системам Linux. Дата: $DATE" --title " Выбор нужного подпункта " --hfile $HFILE --scrollbar --keep-window \
@@ -239,98 +127,6 @@ hlp_menu() {
  	"exit" "Выход из программы" 2> $tempfile 
 }
 
-update() {
-if test -f $update_file; then
-	echo "Файл $update_file присутствует."
-else
-	touch $update_file
-	$DIALOG --backtitle "Helper $VERSION -- обновление программы. Дата: $DATE" --title " Выбор дистрибутива " --hfile $HFILE --scrollbar --keep-window \
-	--menu "Клавишами со стрелками выберите нужный пункт и \nнажмите [Enter]" 20 50 15 \
-		"deb" "Debian/Devuan GNU/Linux" \
-		"rpm" "RHEL/CentOS/Fedora" \
-		"tar" "Arch/Manjaro Linux" \
-		"oth" "Другой дистрибутив" 2> $update_file
-fi
-
-if grep 'deb' $update_file; then
-	clear
-	echo -e "/e[1mИдёт скачивание и установка Helper\e[0m"
-	if test -f Helper.deb; then
-		echo -e "\e[1;32mHelper.deb\e[0m	\e[1mКонфликт с установочным пакетом и он будет удалён\e[0m"
-		rm Helper.deb
-		echo -e "\e[1mУдалено!\e[0m"
-	fi
-	echo -e "Скачивание пакета..."
-	wget https://github.com/Linuxoid85/helper/releases/download/0.06.2.2020/Helper.deb
-	clear
-	echo -e "\e[1mУстановка пакета\e[0m"
-	if test -f Helper.deb; then
-		sudo dpkg -i Helper.deb
-	else
-		echo "file" > $ERR
-		error
-	fi
-	clear
-	echo -e "\e[1mУдаление временных файлов\e[0m"
-	if test -f Helper.deb; then
-		rm Helper.deb
-		$DIALOG --backtitle "Helper $VERSION -- обновление программы. Дата: $DATE" --title " Завершено " --yesno "Обновление установлено." 5 40
-	else
-		echo "file" > $ERR
-		error
-	fi
-fi
-
-# RHEL-based
-if grep 'rpm' $update_file; then
-	echo "dev" > $ERR
-	error
-fi
-
-#Arch-based
-if grep 'tar' $update_file; then
-	echo "dev" > $ERR
-	error
-fi
-
-#Other
-if grep 'oth' $update_file; then
-	clear
-	echo -e "/e[1mИдёт скачивание и установка Helper\e[0m"
-	if test -f Helper.tar; then
-		echo -e "\e[1;32mHelper.tar\e[0m	\e[1mКонфликт с установочным пакетом и он будет удалён\e[0m"
-		rm Helper.tar
-		echo -e "\e[1mУдалено!\e[0m"
-	fi
-	echo -e "Скачивание пакета..."
-	wget https://github.com/Linuxoid85/helper/releases/download/0.06.2.2020/Helper.tar
-	clear
-	echo -e "\e[1mУстановка пакета\e[0m"
-	if test -f Helper.tar; then
-		tar xf Helper.tar
-		sudo cp -R usr /usr
-	else
-		echo "file" > $ERR
-		error
-	fi
-	clear
-	echo -e "\e[1mУдаление временных файлов\e[0m"
-	if test -f Helper.tar; then
-		rm Helper.tar
-	else
-		echo "file" > $ERR
-		error
-	fi
-	if test -d usr; then
-		rm -rf usr
-		$DIALOG --backtitle "Helper $VERSION -- обновление программы. Дата: $DATE" --title " Завершено " --yesno "Обновление установлено." 5 40
-	else
-		echo "file" > $ERR
-		error
-	fi
-fi
-}
-
 #Master
 #=========================================================================#
 clear
@@ -344,7 +140,7 @@ if test -f "$config_file"; then
 	echo -e "\e[1m[\e[0m\e[1;32mOk\e[0m\e[1m]\e[0m	\e[1;33;44m$config_file\e[0m"
 else
 	echo -e "\e[1m[\e[0m\e[1;31mError: file no existts\e[0m\e[1m]\e[0m	\e[1;33;4;44m$config_file\e[0m"
-	touch $config_file
+	touch ~/.helper.config_file
 	echo -e "\e[1m[\e[0m\e[1;32mOk\e[0m\e[1m]\e[0m	\e[1;33;44m$config_file\e[0m"
 fi
 
@@ -375,29 +171,24 @@ if grep $welcome $config_file; then
 	fi
 fi
 
-if grep 'update' $config_file; then
-	echo "$DATE" > ~/.date_up.hlp
-	if grep '10' ~/.date_up.hlp; then
-		update
-	fi
+if grep 'ru' $config_file; then
+	source /usr/share/helper/lc/ru.hlplc
+else
+	source /usr/share/helper/lc/ua.hlplc
 fi
 
 while true; do
 	start_pr
 
 # ПАКЕТНЫЕ МЕНЕДЖЕРЫ
-	if grep $pkg $tempfile; then
+	if grep $pkg $tempfile; then 
 		pkg_menu
 		run=`cat $tempfile`	#Файл с выбранным пунктом меню
    		case $run in
         	apt)
 			if test -f "$APT"; then
-				if [ -z $DISPLAY ]
-				then
-					sh $APT
-				else
-					kdialog --miniicon accessibility-directory --name "Helper" --title "Справка по APT" --textbox /usr/share/helper/pm/apt.hlp 512 256
-				fi
+				#sh $APT
+				dialog --backtitle "Helper $VERSION -- справка по Apt" --title " Справка по APT " --scrollbar --textbox $APT 30 80
 				rm $tempfile && touch $tempfile
 				pkg_menu
 			else
@@ -410,12 +201,7 @@ while true; do
 
         	dpkg)
 			if test -f "$DPKG"; then
-				if [ -z $DISPLAY ]
-				then
-					sh $DPKG
-				else
-					kdialog --miniicon accessibility-directory --title "Справка по DPKG" --textbox /usr/share/helper/pm/dpkg.hlp 512 256
-				fi
+				sh $DPKG
 				rm $tempfile && touch $tempfile
 				pkg_menu
 			else
@@ -428,12 +214,7 @@ while true; do
 
 	        gdebi)
 			if test -f "$GDEBI"; then
-				if [ -z $DISPLAY ]
-				then
-					sh $GDEBI
-				else
-					kdialog --miniicon accessibility-directory --title "Справка по GDebi" --textbox /usr/share/helper/pm/gdebi.hlp 512 256
-				fi
+				sh $GDEBI
 				rm $tempfile && touch $tempfile
 				pkg_menu
 			else
@@ -442,9 +223,22 @@ while true; do
 				rm $tempfile && touch $tempfile
 				pkg_menu
 			fi
-        	;;
+            	;;
 
-	      	urpmX|urpm|urpmi)
+        	eopkg)
+			if test -f "$EOPKG"; then
+				sh $EOPKG
+				rm $tempfile && touch $tempfile
+				pkg_menu
+			else
+				echo "file" > $ERR
+				error
+				rm $tempfile && touch $tempfile
+				pkg_menu
+			fi
+            	;;
+	
+        	urpmX|urpm|urpmi)
 			if test -f "$URPMX"; then
 				sh $URPMX
 				rm $tempfile && touch $tempfile
@@ -459,12 +253,7 @@ while true; do
 
 		yum)
 			if test -f "$YUM"; then
-				if [ -z $DISPLAY ]
-				then
-					sh $YUM
-				else
-					kdialog --miniicon accessibility-directory --title "Справка по YUM" --textbox /usr/share/helper/pm/yum.hlp 512 256
-				fi
+				sh $YUM
 				rm $tempfile && touch $tempfile
 				pkg_menu
 			else
@@ -477,30 +266,7 @@ while true; do
 
 		pacman)
 			if test -f "$PACMAN"; then
-				if [ -z $DISPLAY ]
-				then
-					sh $PACMAN
-				else
-					kdialog --miniicon accessibility-directory --title "Справка по Pacman" --textbox /usr/share/helper/pm/pacman.hlp 512 256
-				fi
-				rm $tempfile && touch $tempfile
-				pkg_menu
-			else
-				echo "file" > $ERR
-				error
-				rm $tempfile && touch $tempfile
-				pkg_menu
-			fi
-		;;
-
-		pkg)
-			if test -f "$PKG"; then
-				if [ -z $DISPLAY ]
-				then
-					sh $PKG
-				else
-					kdialog --miniicon accessibility-directory --title "Справка по PKG" --textbox /usr/share/helper/pm/pkg.hlp 512 256
-				fi
+				sh $PACMAN
 				rm $tempfile && touch $tempfile
 				pkg_menu
 			else
@@ -518,11 +284,6 @@ while true; do
 		
 		exit)
 			exit_pr
-		;;
-
-		*)
-			echo "file" > $ERR
-			error
 		;;
 
 		esac
@@ -709,7 +470,92 @@ while true; do
 	;;
 	
 	update)
-		update
+		if test -f "$update_file"; then
+			dialog --title " Готово! " --msgbox " $update_file Загружен!" 0 0
+		else
+			$DIALOG --backtitle "Helper $VERSION -- обновление программы. Дата: $DATE" --title " Выбор дистрибутива " --hfile $HFILE --scrollbar --keep-window \
+			--menu "Клавишами со стрелками выберите нужный пункт и \nнажмите [Enter]" 20 50 15 \
+			"deb" "Debian/Devuan GNU/Linux" \
+			"rpm" "RHEL/CentOS/Fedora" \
+			"tar" "Arch/Manjaro Linux" \
+			"oth" "Другой дистрибутив" 2> $update_file
+		fi
+		run_update=`cat $update_file`
+
+		if grep 'deb' $update_file; then
+			clear
+			echo -e "/e[1mИдёт скачивание и установка Helper\e[0m"
+			if test -f Helper.deb; then
+				echo -e "\e[1;32mHelper.deb\e[0m	\e[1mКонфликт с установочным пакетом и он будет удалён\e[0m"
+				rm Helper.deb
+				echo -e "\e[1mУдалено!\e[0m"
+			fi
+			echo -e "Скачивание пакета..."
+			wget https://github.com/Linuxoid85/helper/releases/download/0.06.1.2020/Helper.deb
+			clear
+			echo -e "\e[1mУстановка пакета\e[0m"
+			if test -f Helper.deb; then
+				sudo dpkg -i Helper.deb
+			else
+				echo "file" > $ERR
+				error
+			fi
+			clear
+			echo -e "\e[1mУдаление временных файлов\e[0m"
+			if test -f Helper.deb; then
+				rm Helper.deb
+				$DIALOG --backtitle "Helper $VERSION -- обновление программы. Дата: $DATE" --title " Завершено " --yesno "Обновление установлено." 5 40
+			else
+				echo "file" > $ERR
+				error
+			fi
+		fi
+
+		if grep 'rpm' $update_file; then
+			echo "dev" > $ERR
+			error
+		fi
+
+		if grep 'tar' $update_file; then
+			echo "dev" > $ERR
+			error
+		fi
+
+		if grep 'oth' $update_file; then
+			clear
+			echo -e "/e[1mИдёт скачивание и установка Helper\e[0m"
+			if test -f Helper.tar; then
+				echo -e "\e[1;32mHelper.tar\e[0m	\e[1mКонфликт с установочным пакетом и он будет удалён\e[0m"
+				rm Helper.tar
+				echo -e "\e[1mУдалено!\e[0m"
+			fi
+			echo -e "Скачивание пакета..."
+			wget https://github.com/Linuxoid85/helper/releases/download/0.06.1.2020/Helper.tar
+			clear
+			echo -e "\e[1mУстановка пакета\e[0m"
+			if test -f Helper.tar; then
+				tar xf Helper.tar
+				sudo cp -R usr /usr
+			else
+				echo "file" > $ERR
+				error
+			fi
+			clear
+			echo -e "\e[1mУдаление временных файлов\e[0m"
+			if test -f Helper.tar; then
+				rm Helper.tar
+			else
+				echo "file" > $ERR
+				error
+			fi
+			if test -d usr; then
+				rm -rf usr
+				$DIALOG --backtitle "Helper $VERSION -- обновление программы. Дата: $DATE" --title " Завершено " --yesno "Обновление установлено." 5 40
+			else
+				echo "file" > $ERR
+				error
+			fi
+		fi
 		rm $tempfile && touch $tempfile
 		hlp_menu
 
@@ -740,7 +586,7 @@ while true; do
 			hlp_menu
 		fi
         ;;
-
+        
         bgs)
         	bgs_lst=/usr/share/helper/fl/bugs.sh
         	if test -f "$bgs_lst"; then
