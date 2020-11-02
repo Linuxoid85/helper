@@ -1,0 +1,44 @@
+#Script:
+LICENSE=/usr/share/helper/fl/license.sh		 #Лицензионное соглашение
+VERSION="0.06.2020"				 #Текущая версия
+DIALOG=${DIALOG=dialog}
+tempfile=~/.helper.tmpfile	 		#Файл для работы меню
+update_file=~/.helper.distr.update 		#Файл для работы обновлений
+directory=`pwd`					 #Где я?
+mem=`free -t -m|grep 'Mem'`			 #Память
+HELP=/usr/share/helper/fl/help.sh		 #Справка
+FIRST_START=/usr/share/helper/fl/first-start.sh  #Экран приветствия
+DATE=`date`					 #Дата (краткий формат)(
+HFILE=/usr/share/helper/fl/hfile.sh		 #Быстрая справка
+ERR=~/.helper_ERR_log.log	         	#Файл для работы обработчика ошибок (это не лог)
+ABOUT=/usr/share/helper/fl/about.sh		 #О программе
+SETTINGS=/usr/share/helper/fl/settings.sh	 #Настройки
+#Пакетные менеджеры:
+APT=/usr/share/helper/pm/apt.hlp
+DPKG=/usr/share/helper/pm/dpkg.hlp
+GDEBI=/usr/share/helper/pm/gdebi.hlp
+EOPKG=/usr/share/helper/pm/eopkg.hlp
+URPMX=/usr/share/helper/pm/urpm.hlp
+PACMAN=/usr/share/helper/pm/pacman.hlp
+YUM=/usr/share/helper/pm/yum.hlp
+#BASH:
+LS=/usr/share/helper/sh/ls.sh
+CD=/usr/share/helper/sh/cd.sh
+MKDIR=/usr/share/helper/sh/mkdir.sh
+MV=/usr/share/helper/sh/mv.sh
+BASH=/usr/share/helper/sh/bash.sh
+#Sys:
+DISTR=/usr/share/helper/sys/distro.sh
+DISTR_FOR_NOOBS=/usr/share/helper/sys/distro_for_noobs.sh
+USRS=/usr/share/helper/sys/usrs.sh
+#Настройки:
+config_file=~/.helper.config_file		#Файл с настройками
+welcome=show_welcome_screen	#Стартовый экран
+#Что-то для меню:
+pkg=pkg
+bash=bash
+system=system
+laifhack=laifhack
+helper=helper
+#Другое:
+    #нет другого...
