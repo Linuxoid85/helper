@@ -53,4 +53,3 @@ $DIALOG --backtitle "Helper $VERSION -- справка по Advansed Package Too
 
 (C) @linuxoid85 специально для ''Советы по Linux/GNU Linux'', 2020
 " 30 80
-rm $tempfile && touch $tempfile
